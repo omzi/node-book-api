@@ -18,7 +18,7 @@ exports.getBooks = async (req, res, next) => {
 		
 		books.forEach(book => {
 			for (const field in book) {
-				if (!fields.includes(field)) delete book[field];
+				if (!fields.includes(field) && field !== 'id') delete book[field];
 			}
 		})
 	}
