@@ -1,4 +1,3 @@
-const path = require('path');
 const uuid = require('uuid');
 const Book = require('../models/Book');
 const loadBooks = require('../utils/loadBooks');
@@ -36,7 +35,7 @@ exports.getBook = async (req, res, next) => {
   res.status(200).json({ success: true, data: bookExists[+[]] });
 }
 
-/**s
+/**
  * @desc    Add new book
  * @route   POST /api/v1/books/
  * @access  Public
@@ -74,7 +73,10 @@ exports.addBook = async (req, res, next) => {
  */
 exports.updateBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({ success: false, error: `Invalid UUID {${req.params.id}}` })
+		return res.status(400).json({
+			success: false,
+			error: `Invalid UUID "${req.params.id}"`
+		});
 	}
 
 	let books = loadBooks();
@@ -83,21 +85,28 @@ exports.updateBook = async (req, res, next) => {
 	if (bookIndex !== -1) {
 		// Update book details...
 		const newDetails = req.body;
-		const privateFields = ['id'];
+		const immutableFields = ['id'];
 		const fields = Object.keys(books[bookIndex]);
 
-		privateFields.forEach(field => delete newDetails[field]);
+		immutableFields.forEach(field => delete newDetails[field]);
 
 		Object.keys(newDetails).forEach(field => {
-			if (fields.includes(field) && !privateFields.includes(field)) {
+			if (fields.includes(field) && !immutableFields.includes(field)) {
 				books[bookIndex][field] = newDetails[field];
 			}
 		})
 
 		saveBooks(books);
-		res.status(201).json({ success: true, message: `Book with UUID "${req.params.id}" was updated successfully!` });
+		res.status(201).json({
+			success: true,
+			message: `Book with UUID "${req.params.id}" was updated successfully!`,
+			data: books[bookIndex]
+		});
 	} else {
-		res.status(404).json({ success: false, error: `Book with UUID "${req.params.id}" not found!` });
+		res.status(404).json({
+			success: false,
+			error: `Book with UUID "${req.params.id}" not found!`
+		});
 	}
 }
 
@@ -108,7 +117,10 @@ exports.updateBook = async (req, res, next) => {
  */
 exports.deleteBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({ success: false, error: `Invalid UUID {${req.params.id}}` })
+		return res.status(400).json({
+			success: false,
+			error: `Invalid UUID "${req.params.id}"`
+		}) 
 	}
 
 	let books = loadBooks();
@@ -116,8 +128,15 @@ exports.deleteBook = async (req, res, next) => {
 
 	if (bookIndex !== -1) {
 		books.splice(bookIndex, 1), saveBooks(books);
-		res.status(201).json({ success: true, message: `Book with UUID "${req.params.id}" was removed successfully!` });
+		res.status(201).json({
+			success: true,
+			message: `Book with UUID "${req.params.id}" was removed successfully!`,
+			data: {}
+		});
 	} else {
-		res.status(404).json({ success: false, error: `Book with UUID "${req.params.id}" not found!` });
+		res.status(404).json({
+			success: false,
+			error: `Book with UUID "${req.params.id}" not found!`
+		});
 	}
 }
