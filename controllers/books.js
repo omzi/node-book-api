@@ -10,9 +10,37 @@ const saveBooks = require('../utils/saveBooks');
  * @access  Public
  */
 exports.getBooks = async (req, res, next) => {
-	const books = loadBooks();
+	let books = loadBooks();
 
-  res.status(200).json({ success: true, count: books.length, data: books });
+	// Select Fields
+	if (req.query.select) {
+		const fields = req.query.select.split(',');
+		
+		books.forEach(book => {
+			for (const field in book) {
+				if (!fields.includes(field)) delete book[field];
+			}
+		})
+	}
+
+	// Limit Fields & Pagination
+	const page = parseInt(req.query.page, 10) || 1,
+				limit = parseInt(req.query.limit, 10) || 5,
+				startIndex = (page - 1) * limit,
+				endIndex = page * limit,
+				total = books.length,
+				pagination = {}
+	
+  if (endIndex < total) (pagination.next = { page: page + 1, limit })
+  if (startIndex > 0) (pagination.prev = { page: page - 1, limit })
+
+	const result = books.slice(startIndex, endIndex);
+
+	if (Math.floor(total / page) !== 1 && result.length) {
+		res.status(200).json({ success: true, count: result.length, pagination, data: result });
+	} else {
+		res.status(400).json({ success: false, error: 'Invalid page or limit!', count: result.length, pagination: {}, data: result });
+	}
 }
 
 /**
@@ -66,17 +94,14 @@ exports.addBook = async (req, res, next) => {
 	}
 }
 
-/**s
+/**
  * @desc    Update book
  * @route   UPDATE /api/v1/books/:id
  * @access  Public
  */
 exports.updateBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({
-			success: false,
-			error: `Invalid UUID "${req.params.id}"`
-		});
+		return res.status(400).json({ success: false, error: `Invalid UUID "${req.params.id}"` });
 	}
 
 	let books = loadBooks();
@@ -97,30 +122,20 @@ exports.updateBook = async (req, res, next) => {
 		})
 
 		saveBooks(books);
-		res.status(201).json({
-			success: true,
-			message: `Book with UUID "${req.params.id}" was updated successfully!`,
-			data: books[bookIndex]
-		});
+		res.status(200).json({ success: true, message: `Book with UUID "${req.params.id}" was updated successfully!`, data: books[bookIndex] });
 	} else {
-		res.status(404).json({
-			success: false,
-			error: `Book with UUID "${req.params.id}" not found!`
-		});
+		res.status(404).json({ success: false, error: `Book with UUID "${req.params.id}" not found!` });
 	}
 }
 
-/**s
+/**
  * @desc    Delete book
  * @route   DELETE /api/v1/books/:id
  * @access  Public
  */
 exports.deleteBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({
-			success: false,
-			error: `Invalid UUID "${req.params.id}"`
-		}) 
+		return res.status(400).json({ success: false, error: `Invalid UUID "${req.params.id}"` }) 
 	}
 
 	let books = loadBooks();
@@ -128,15 +143,8 @@ exports.deleteBook = async (req, res, next) => {
 
 	if (bookIndex !== -1) {
 		books.splice(bookIndex, 1), saveBooks(books);
-		res.status(201).json({
-			success: true,
-			message: `Book with UUID "${req.params.id}" was removed successfully!`,
-			data: {}
-		});
+		res.status(200).json({ success: true, message: `Book with UUID "${req.params.id}" was removed successfully!`, data: {} });
 	} else {
-		res.status(404).json({
-			success: false,
-			error: `Book with UUID "${req.params.id}" not found!`
-		});
+		res.status(404).json({ success: false, error: `Book with UUID "${req.params.id}" not found!` });
 	}
 }
