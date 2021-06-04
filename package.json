@@ -1,0 +1,35 @@
+{
+  "name": "node-book-api",
+  "version": "1.0.0",
+  "description": "A rather simple public Node API",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon .",
+    "start": "node server",
+    "test": "mocha **/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omzi/node-book-api.git"
+  },
+  "keywords": [
+    "node",
+    "API",
+    "JSON"
+  ],
+  "author": "Omezibe Obioha",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/omzi/node-book-api/issues"
+  },
+  "homepage": "https://github.com/omzi/node-book-api#readme",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.7"
+  }
+}
