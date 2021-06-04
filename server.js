@@ -2,7 +2,7 @@ const express = require('express');
 const colors = require('colors');
 
 
-// Loads .env file from root directly
+// Loads .env file from root directory
 require('dotenv').config();
 
 const app = express();
