@@ -96,7 +96,7 @@ exports.addBook = async (req, res, next) => {
 
 /**
  * @desc    Update book
- * @route   UPDATE /api/v1/books/:id
+ * @route   PUT /api/v1/books/:id
  * @access  Public
  */
 exports.updateBook = async (req, res, next) => {
