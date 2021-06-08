@@ -4,9 +4,8 @@
   "description": "A rather simple public Node API",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon .",
-    "start": "node server",
-    "test": "mocha **/*.test.js"
+    "dev": "nodemon server.js",
+    "start": "pm2 start server.js -i max"
   },
   "repository": {
     "type": "git",
@@ -31,6 +30,7 @@
     "express": "^4.17.1",
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
+    "pm2": "^5.0.3",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
