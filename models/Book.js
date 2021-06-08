@@ -6,6 +6,10 @@ const BookSchema = Joi.object({
         .guid({ version: 'uuidv4' })
         .required(),
     
+    user: Joi.string()
+        .guid({ version: 'uuidv4' })
+        .required(),
+    
     title: Joi.string()
         .min(1)
         .max(100)
@@ -36,7 +40,7 @@ const BookSchema = Joi.object({
         .required(),
     
     description: Joi.string()
-        .min(100)
+        .min(50)
         .max(500)
         .required(),
 

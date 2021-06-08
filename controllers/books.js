@@ -24,12 +24,12 @@ exports.getBooks = async (req, res, next) => {
 	}
 
 	// Limit Fields & Pagination
-	const page = parseInt(req.query.page, 10) || 1,
-				limit = parseInt(req.query.limit, 10) || 5,
-				startIndex = (page - 1) * limit,
-				endIndex = page * limit,
-				total = books.length,
-				pagination = {}
+	const page = parseInt(req.query.page, 10) || 1;
+	const limit = parseInt(req.query.limit, 10) || 5;
+	const startIndex = (page - 1) * limit;
+	const endIndex = page * limit;
+	const total = books.length;
+	const pagination = {};
 	
   if (endIndex < total) (pagination.next = { page: page + 1, limit })
   if (startIndex > 0) (pagination.prev = { page: page - 1, limit })
@@ -37,9 +37,9 @@ exports.getBooks = async (req, res, next) => {
 	const result = books.slice(startIndex, endIndex);
 
 	if (Math.floor(total / page) !== 1 && result.length) {
-		res.status(200).json({ success: true, count: result.length, pagination, data: result });
+		res.status(200).json({ status: true, count: result.length, pagination, data: result });
 	} else {
-		res.status(400).json({ success: false, error: 'Invalid page or limit!', count: result.length, pagination: {}, data: result });
+		res.status(400).json({ status: false, error: 'Invalid page or limit!', count: 0, pagination: {}, data: [] });
 	}
 }
 
@@ -50,17 +50,17 @@ exports.getBooks = async (req, res, next) => {
  */
 exports.getBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({ success: false, error: `Invalid UUID "${req.params.id}"` })
+		return res.status(400).json({ status: false, error: `Invalid UUID "${req.params.id}"` })
 	}
 	
 	const books = loadBooks();
 	const bookExists = books.filter(book => book.id === req.params.id);
 
 	if (!bookExists.length) {
-		return res.status(404).json({ success: false, error: `Book not found with UUID "${req.params.id}"` })
+		return res.status(404).json({ status: false, error: `Book not found with UUID "${req.params.id}"` })
 	}
 
-  res.status(200).json({ success: true, data: bookExists[+[]] });
+  res.status(200).json({ status: true, data: bookExists[+[]] });
 }
 
 /**
@@ -72,6 +72,15 @@ exports.addBook = async (req, res, next) => {
 	const books = loadBooks();
 	const { body } = req;
 	body.id = uuid.v4();
+	body.user = req.user.id;
+
+	// Check for books posted by the current user
+	const postedBooks = books.filter(book => book.user === req.user.id);
+
+	// If user is not an admin, they can only post one book
+	if (postedBooks.length && req.user.role !== 'admin') {
+		return res.status(400).json({ status: false, error: `User with ID "${req.user.id}" has already posted a book` })
+	}
 
 	try {
 		const book = await Book.validateAsync(body);
@@ -81,16 +90,16 @@ exports.addBook = async (req, res, next) => {
 		})
 
 		if (isDuplicate.length) {
-			res.status(400).json({ success: false, error: `"${body.title}" by "${body.author}" already exists!` })
+			res.status(400).json({ status: false, error: `"${body.title}" by "${body.author}" already exists!` })
 		} else {
-			books.push(book); saveBooks(books);
-			res.status(201).json({ success: true, data: book });
+			books.push(book), saveBooks(books);
+			res.status(201).json({ status: true, data: book });
 		}
 	} catch (error) {
 		const { details } = error;
     const message = details.map(i => i.message).join(', ');
  
-   	res.status(422).json({ success: false, error: message })
+   	res.status(422).json({ status: false, error: message })
 	}
 }
 
@@ -101,13 +110,18 @@ exports.addBook = async (req, res, next) => {
  */
 exports.updateBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({ success: false, error: `Invalid UUID "${req.params.id}"` });
+		return res.status(400).json({ status: false, error: `Invalid UUID "${req.params.id}"` });
 	}
 
 	let books = loadBooks();
-	let bookIndex = books.findIndex(book => book.id.toLowerCase() === req.params.id.toLowerCase());
+	let bookIndex = books.findIndex(book => book.id === req.params.id);
 
 	if (bookIndex !== -1) {
+		// If user is poster or admin, allow them update the book
+		if (req.user.id !== books[bookIndex].user && req.user.role !== 'admin') {
+			return res.status(401).json({ status: false, error: `User with ID "${req.user.id}" is not authorized to update this book` })
+		}
+
 		// Update book details...
 		const newDetails = req.body;
 		const immutableFields = ['id'];
@@ -122,9 +136,9 @@ exports.updateBook = async (req, res, next) => {
 		})
 
 		saveBooks(books);
-		res.status(200).json({ success: true, message: `Book with UUID "${req.params.id}" was updated successfully!`, data: books[bookIndex] });
+		res.status(200).json({ status: true, message: `Book with UUID "${req.params.id}" was updated statusfully!`, data: books[bookIndex] });
 	} else {
-		res.status(404).json({ success: false, error: `Book with UUID "${req.params.id}" not found!` });
+		res.status(404).json({ status: false, error: `Book with UUID "${req.params.id}" not found!` });
 	}
 }
 
@@ -135,16 +149,21 @@ exports.updateBook = async (req, res, next) => {
  */
 exports.deleteBook = async (req, res, next) => {
 	if (!uuid.validate(req.params.id)) {
-		return res.status(400).json({ success: false, error: `Invalid UUID "${req.params.id}"` }) 
+		return res.status(400).json({ status: false, error: `Invalid UUID "${req.params.id}"` }) 
 	}
 
 	let books = loadBooks();
 	let bookIndex = books.findIndex(book => book.id.toLowerCase() === req.params.id.toLowerCase());
 
 	if (bookIndex !== -1) {
+		// If user is poster or admin, allow them delete the book
+		if (req.user.id !== books[bookIndex].user && req.user.role !== 'admin') {
+			return res.status(401).json({ status: false, error: `User with ID "${req.user.id}" is not authorized to delete this book` })
+		}
+		
 		books.splice(bookIndex, 1), saveBooks(books);
-		res.status(200).json({ success: true, message: `Book with UUID "${req.params.id}" was removed successfully!`, data: {} });
+		res.status(200).json({ status: true, message: `Book with UUID "${req.params.id}" was removed statusfully!`, data: {} });
 	} else {
-		res.status(404).json({ success: false, error: `Book with UUID "${req.params.id}" not found!` });
+		res.status(404).json({ status: false, error: `Book with UUID "${req.params.id}" not found!` });
 	}
 }
