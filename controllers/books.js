@@ -99,7 +99,7 @@ exports.addBook = async (req, res, next) => {
 		const { details } = error;
     const message = details.map(i => i.message).join(', ');
  
-   	res.status(422).json({ status: false, error: message })
+   	res.status(422).json({ status: false, error: message });
 	}
 }
 
@@ -135,8 +135,19 @@ exports.updateBook = async (req, res, next) => {
 			}
 		})
 
-		saveBooks(books);
-		res.status(200).json({ status: true, message: `Book with UUID "${req.params.id}" was updated statusfully!`, data: books[bookIndex] });
+		// Validate new details against schema
+		try {
+			await Book.validateAsync(books[bookIndex]);
+
+			saveBooks(books);
+		} catch (error) {
+			const { details } = error;
+			const message = details.map(i => i.message).join(', ');
+	
+			return res.status(422).json({ status: false, error: message });
+		}
+
+		return res.status(200).json({ status: true, message: `Book with UUID "${req.params.id}" was updated successfully!`, data: books[bookIndex] });
 	} else {
 		res.status(404).json({ status: false, error: `Book with UUID "${req.params.id}" not found!` });
 	}
@@ -162,7 +173,7 @@ exports.deleteBook = async (req, res, next) => {
 		}
 		
 		books.splice(bookIndex, 1), saveBooks(books);
-		res.status(200).json({ status: true, message: `Book with UUID "${req.params.id}" was removed statusfully!`, data: {} });
+		res.status(200).json({ status: true, message: `Book with UUID "${req.params.id}" was removed successfully!`, data: {} });
 	} else {
 		res.status(404).json({ status: false, error: `Book with UUID "${req.params.id}" not found!` });
 	}

@@ -6,9 +6,9 @@ const loadUsers = require('../utils/loadUsers');
 exports.protect = async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startWith('Bearer')) {
+  if (req.headers.authorization && req.headers.authorization.split(' ')[+[]] === 'Bearer') {
     // Set token from header
-    token = req.headers.authorization.split(' ').shift();
+    token = req.headers.authorization.split(' ').pop();
   } else if (req.cookies.token) {
     // Set token from cookie
     token = req.cookies.token;

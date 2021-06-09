@@ -6,15 +6,26 @@ const UserSchema = Joi.object({
         .guid({ version: 'uuidv4' })
         .required(),
     
-    name: Joi.string()
+    firstName: Joi.string()
         .min(2)
         .max(50)
         .required()
         .messages({
-            'any.required': 'Name field is required',
-            'string.empty': `Please enter a name`,
-            'string.min': 'Your name should have a minimum length of {#limit}',
-            'string.max': 'Your name should have a maximum length of {#limit}',
+            'any.required': 'Firstname field is required',
+            'string.empty': `Please enter your firstname`,
+            'string.min': 'Your firstname should have a minimum length of {#limit}',
+            'string.max': 'Your firstname should have a maximum length of {#limit}',
+        }),
+    
+    lastName: Joi.string()
+        .min(2)
+        .max(50)
+        .required()
+        .messages({
+            'any.required': 'Lastname field is required',
+            'string.empty': `Please enter your lastname`,
+            'string.min': 'Your lastname should have a minimum length of {#limit}',
+            'string.max': 'Your lastname should have a maximum length of {#limit}',
         }),
     
     email: Joi.string()

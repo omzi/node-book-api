@@ -46,7 +46,7 @@ const BookSchema = Joi.object({
 
     isbn: Joi.string()
         .regex(/^(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/)
-        .message('isbn must be valid ISBN-10 or ISBN-13')
+        .message('ISBN must be valid ISBN-10 or ISBN-13')
         .required()
 })
 
