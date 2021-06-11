@@ -54,13 +54,13 @@ exports.getBook = async (req, res, next) => {
 	}
 	
 	const books = loadBooks();
-	const bookExists = books.filter(book => book.id === req.params.id);
+	const bookExists = books.find(book => book.id === req.params.id);
 
-	if (!bookExists.length) {
+	if (!bookExists) {
 		return res.status(404).json({ status: false, error: `Book not found with UUID "${req.params.id}"` })
 	}
 
-  res.status(200).json({ status: true, data: bookExists[+[]] });
+  res.status(200).json({ status: true, data: bookExists });
 }
 
 /**
@@ -75,21 +75,21 @@ exports.addBook = async (req, res, next) => {
 	body.user = req.user.id;
 
 	// Check for books posted by the current user
-	const postedBooks = books.filter(book => book.user === req.user.id);
+	const postedBooks = books.find(book => book.user === req.user.id);
 
 	// If user is not an admin, they can only post one book
-	if (postedBooks.length && req.user.role !== 'admin') {
+	if (postedBooks && req.user.role !== 'admin') {
 		return res.status(400).json({ status: false, error: `User with ID "${req.user.id}" has already posted a book` })
 	}
 
 	try {
 		const book = await Book.validateAsync(body);
 
-		const isDuplicate = books.filter(book => {
+		const isDuplicate = books.find(book => {
 			return book.title.toLowerCase() === body.title.toLowerCase() && book.author.toLowerCase() === body.author.toLowerCase();
 		})
 
-		if (isDuplicate.length) {
+		if (isDuplicate) {
 			res.status(400).json({ status: false, error: `"${body.title}" by "${body.author}" already exists!` })
 		} else {
 			books.push(book), saveBooks(books);
@@ -164,7 +164,7 @@ exports.deleteBook = async (req, res, next) => {
 	}
 
 	let books = loadBooks();
-	let bookIndex = books.findIndex(book => book.id.toLowerCase() === req.params.id.toLowerCase());
+	let bookIndex = books.findIndex(book => book.id === req.params.id);
 
 	if (bookIndex !== -1) {
 		// If user is poster or admin, allow them delete the book
