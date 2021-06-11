@@ -57,7 +57,7 @@ const UserSchema = Joi.object({
     
     resetPasswordToken: Joi.string(),
 
-    resetPasswordExpire: Joi.string(),
+    resetPasswordExpire: Joi.number(),
 
     createdAt: Joi.date()
         .default(Date.now)
